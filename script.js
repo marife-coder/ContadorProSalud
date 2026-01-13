@@ -38,43 +38,55 @@ function guardar() {
     let persona = document.getElementById("personaEntrega").value;
 
     let total = totalChuletadas();
+    let registrados = registros.length;
 
-    // Validaciones básicas
     if (!comprador || !lugar || !persona) {
         alert("Complete todos los datos del registro");
         return;
     }
 
-    // 🚫 No permitir guardar si no hay ventas
-    if (total === 0) {
-        alert("⚠️ No hay chuletadas registradas");
+    if (registrados >= total) {
+        alert("⚠️ Ya se registraron todas las chuletadas vendidas");
         return;
     }
 
+    const data = {
+        comprador,
+        lugar,
+        persona,
+        entregado: false
+    };
+
     fetch(URL, {
         method: "POST",
-        body: JSON.stringify({
-            comprador,
-            lugar,
-            persona
-        }),
-        headers: {
-            "Content-Type": "application/json"
-        }
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
     })
     .then(res => res.json())
-    .then(() => {
-        alert("✅ Registro guardado correctamente");
+    .then(resp => {
+        if (resp.result === "ok") {
 
-        // Limpiar campos
-        document.getElementById("comprador").value = "";
-        document.getElementById("lugar").value = "";
-        document.getElementById("personaEntrega").value = "";
+            // ✅ guardar también en local
+            registros.push(data);
+            localStorage.setItem("registros", JSON.stringify(registros));
+
+            alert("✅ Registro guardado en Google Sheets");
+
+            document.getElementById("comprador").value = "";
+            document.getElementById("lugar").value = "";
+            document.getElementById("personaEntrega").value = "";
+
+            ver();
+        } else {
+            alert("❌ Error en Google Sheets");
+        }
     })
-    .catch(() => {
-        alert("❌ Error al guardar. Intenta otra vez");
+    .catch(err => {
+        console.error(err);
+        alert("❌ Error de conexión");
     });
 }
+
 
 function totalChuletadas() {
     return contadores.reduce((total, valor) => total + valor, 0);
