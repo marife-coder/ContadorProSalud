@@ -30,13 +30,14 @@ function guardarContadores() {
     actualizar();
 }
 
+const URL = "https://script.google.com/macros/s/AKfycbwONgbUzrzhbZ5VBck87crtmCaEVfbe-zFlMgjlYafacCs1jUOpIlbToZATfQ9J_u6g1g/exec";
+
 function guardar() {
     let comprador = document.getElementById("comprador").value.trim();
     let lugar = document.getElementById("lugar").value.trim();
     let persona = document.getElementById("personaEntrega").value;
 
     let total = totalChuletadas();
-    let registrados = registros.length;
 
     // Validaciones básicas
     if (!comprador || !lugar || !persona) {
@@ -44,22 +45,35 @@ function guardar() {
         return;
     }
 
-    // 🚫 No permitir más registros que ventas
-    if (registrados >= total) {
-        alert("⚠️ Ya se registraron todas las chuletadas vendidas");
+    // 🚫 No permitir guardar si no hay ventas
+    if (total === 0) {
+        alert("⚠️ No hay chuletadas registradas");
         return;
     }
 
-    // Guardar registro
-    registros.push({ comprador, lugar, persona, entregado: false });
-    localStorage.setItem("registros", JSON.stringify(registros));
+    fetch(URL, {
+        method: "POST",
+        body: JSON.stringify({
+            comprador,
+            lugar,
+            persona
+        }),
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
+    .then(res => res.json())
+    .then(() => {
+        alert("✅ Registro guardado correctamente");
 
-    // Limpiar campos
-    document.getElementById("comprador").value = "";
-    document.getElementById("lugar").value = "";
-    document.getElementById("personaEntrega").value = "";
-
-    alert(`Registro ${registrados + 1} de ${total} guardado correctamente`);
+        // Limpiar campos
+        document.getElementById("comprador").value = "";
+        document.getElementById("lugar").value = "";
+        document.getElementById("personaEntrega").value = "";
+    })
+    .catch(() => {
+        alert("❌ Error al guardar. Intenta otra vez");
+    });
 }
 
 function totalChuletadas() {
